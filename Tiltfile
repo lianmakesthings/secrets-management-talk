@@ -7,12 +7,22 @@ load('ext://helm_resource', 'helm_resource', 'helm_repo')
 # k8s_yaml('app/sealed-secret.yaml')
 # k8s_resource(workload='sealed-secret', labels=['app'])
 
-load('ext://helm_resource', 'helm_resource', 'helm_repo')
-helm_repo('bitnami', 'https://bitnami-labs.github.io/sealed-secrets')
-helm_resource('sealed-secrets', 'sealed-secrets/sealed-secrets')
+# Installing External Secrets Operator
+helm_repo('eso', 'https://charts.external-secrets.io')
+helm_resource('external-secrets', 'eso/external-secrets')
 
-k8s_yaml('k8s/sealed-secret.yaml')
-#k8s_resource(workload="test-secret", labels=["secrets"])
+# Installing Hashicorp Vault
+# helm_repo('hashicorp', 'https://helm.releases.hashicorp.com', labels=['vault'])
+# helm_resource('consul', 'hashicorp/consul', namespace='vault', flags=['--create-namespace', '--values', 'vault/consul-values.yaml'], labels=['vault'])
+# helm_resource('vault', 'hashicorp/vault', namespace='vault', resource_deps=['consul'], flags=['--create-namespace', '--values', 'vault/vault-values.yaml'], labels=['vault'])
 
-k8s_yaml('app/pod-reading-secret.yaml')
-k8s_resource(workload='reading-secret', labels=['app'])
+# os.putenv('VAULT_ADDR', 'http://127.0.0.1:8200')
+# local_resource(
+#   name='forward-vault',
+#   serve_cmd='kubectl port-forward svc/vault -n vault 8200:8200',
+#   resource_deps=['vault'],
+#   labels=['vault']
+# )
+
+# k8s_yaml('app/pod-reading-secret.yaml')
+# k8s_resource(workload='reading-secret', labels=['app'])
