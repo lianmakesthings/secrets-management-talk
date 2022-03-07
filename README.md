@@ -4,8 +4,8 @@
 
 # Case 1
 ## Objective
-- Secret provided as Sealed Secret
 - Secret managed by team directly
+- Secret provided as Sealed Secret
 
 ## Usage
 ### Seal Secret for remote cluster usage
@@ -21,7 +21,7 @@ kubeseal --fetch-cert --controller-name=sealed-secrets --controller-namespace=de
 ```
 - Seal Secret with kubeseal
 ```
-kubeseal --cert=remote-cluster/pub-cert.pem --format=yaml < k8s/k8s-secret.yaml > k8s/sealed-secret.yaml
+kubeseal --cert=remote-cluster/pub-cert.pem --format=yaml < app/k8s-secret.yaml > app/sealed-secret.yaml
 ```
 ### make sealed secret usable on local cluster
 - Fetch private keys from remote cluster
