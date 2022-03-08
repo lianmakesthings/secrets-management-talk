@@ -11,8 +11,8 @@
 ### Seal Secret for remote cluster usage
 - Install sealed secrets controller on remote cluster via helm
 ```
-helm repo add sealed-secrets https://bitnami-labs.github.io/sealed-secrets
-helm install sealed-secrets sealed-secrets/sealed-secrets
+helm repo add bitnami https://bitnami-labs.github.io/sealed-secrets
+helm install sealed-secrets bitnami/sealed-secrets
 ```
 - Install kubeseal, fetch pubkey from cluster
 ```
@@ -37,9 +37,49 @@ kubectl delete pod -l name=sealed-secrets
 
 # Case 2
 ## Objective
-- Secret managed by Cloud Provider
+- Secret managed by Cloud Provider (GCP)
 - Secret provided by External Secret Operator
 
+- Create a cluster
+- Install ESO
+```
+helm repo add eso https://charts.external-secrets.io
+helm install external-secrets eso/external-secrets --namespace eso --create-namespace
+```
+- Create GCP Service Account with necessary role
+```
+gcloud iam service-accounts create external-secrets \
+    --project=GCP_PROJECT_ID
+gcloud projects add-iam-policy-binding GCP_PROJECT_ID \
+    --member "serviceAccount:external-secrets@GCP_PROJECT_ID.iam.gserviceaccount.com" \
+    --role "roles/secretmanager.secretAccessor"
+```
+- Allow K8s SA to impersonate GCP SA
+```
+gcloud iam service-accounts add-iam-policy-binding external-secrets@GCP_PROJECT_ID.iam.gserviceaccount.com \
+    --role roles/iam.workloadIdentityUser \
+    --member "serviceAccount:GCP_PROJECT_ID.svc.id.goog[eso/external-secrets]"
+```
+- Add GCP SA json key to cluster
+```
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gcpsm-secret
+  labels:
+    type: gcpsm
+type: Opaque
+stringData:
+  secret-access-credentials: |-
+    // This is where the jsonkey goes
+EOF
+```
+- Allow ESO to connect to GCP & retrieve the secret from Google Secret Manager
+```
+kubectl apply -f eso/secret-store.yaml
+kubectl apply -f eso/gcp-secret.yaml
+```
 
 # Case 3
 ## Objective

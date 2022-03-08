@@ -9,7 +9,7 @@ load('ext://helm_resource', 'helm_resource', 'helm_repo')
 
 # Installing External Secrets Operator
 helm_repo('eso', 'https://charts.external-secrets.io')
-helm_resource('external-secrets', 'eso/external-secrets')
+helm_resource('external-secrets', 'eso/external-secrets', namespace='eso', flags=['--create-namespace'], labels=['eso'])
 
 # Installing Hashicorp Vault
 # helm_repo('hashicorp', 'https://helm.releases.hashicorp.com', labels=['vault'])

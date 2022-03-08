@@ -1,1 +1,3 @@
 tilt_modules/
+vault/unseal-keys.txt
+eso/gcp-sa-key-secret.yaml
