@@ -1,3 +1,4 @@
-tilt_modules/
-vault/unseal-keys.txt
+sealed-secrets/master.key
+sealed-secrets/pub-cert.pem
 eso/gcp-sa-key-secret.yaml
+vault/unseal-keys.txt

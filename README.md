@@ -41,11 +41,6 @@ kubectl delete pod -l name=sealed-secrets
 - Secret provided by External Secret Operator
 
 - Create a cluster
-- Install ESO
-```
-helm repo add eso https://charts.external-secrets.io
-helm install external-secrets eso/external-secrets --namespace eso --create-namespace
-```
 - Create GCP Service Account with necessary role
 ```
 gcloud iam service-accounts create external-secrets \
@@ -53,6 +48,11 @@ gcloud iam service-accounts create external-secrets \
 gcloud projects add-iam-policy-binding GCP_PROJECT_ID \
     --member "serviceAccount:external-secrets@GCP_PROJECT_ID.iam.gserviceaccount.com" \
     --role "roles/secretmanager.secretAccessor"
+```
+- Install ESO
+```
+helm repo add eso https://charts.external-secrets.io
+helm install external-secrets eso/external-secrets --namespace eso --create-namespace
 ```
 - Allow K8s SA to impersonate GCP SA
 ```
