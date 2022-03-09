@@ -1,4 +1,4 @@
 sealed-secrets/master.key
 sealed-secrets/pub-cert.pem
-eso/gcp-sa-key-secret.yaml
+gcp/gcp-sa-key-secret.yaml
 vault/unseal-keys.txt

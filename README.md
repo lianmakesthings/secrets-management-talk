@@ -40,7 +40,6 @@ kubectl delete pod -l name=sealed-secrets
 - Secret managed by Cloud Provider (GCP)
 - Secret provided by External Secret Operator
 
-- Create a cluster
 - Create GCP Service Account with necessary role
 ```
 gcloud iam service-accounts create external-secrets \
@@ -49,6 +48,13 @@ gcloud projects add-iam-policy-binding GCP_PROJECT_ID \
     --member "serviceAccount:external-secrets@GCP_PROJECT_ID.iam.gserviceaccount.com" \
     --role "roles/secretmanager.secretAccessor"
 ```
+- Create a cluster with Workload Identity enabled
+```
+gcloud container clusters create CLUSTER_NAME \
+    --region=COMPUTE_REGION \
+    --workload-pool=secret-management-talk.svc.id.goog
+```
+
 - Install ESO
 ```
 helm repo add eso https://charts.external-secrets.io
@@ -79,6 +85,17 @@ EOF
 ```
 kubectl apply -f eso/secret-store.yaml
 kubectl apply -f eso/gcp-secret.yaml
+```
+
+- Create GCP Secrets
+```
+printf "BAR" | gcloud secrets create FOO --data-file=-
+printf "GCP" | gcloud secrets create SOURCE --data-file=-
+```
+
+- Create External Secret
+```
+kubectl apply -f eso/external-secret.yaml
 ```
 
 # Case 3
