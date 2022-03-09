@@ -1,6 +1,6 @@
 load('ext://helm_resource', 'helm_resource', 'helm_repo')
 
-# Installing Bitnami Sealed Secrets
+# # Installing Bitnami Sealed Secrets
 # helm_repo('bitnami', 'https://bitnami-labs.github.io/sealed-secrets')
 # helm_resource('sealed-secrets', 'bitnami/sealed-secrets')
 # Applying sealed secret

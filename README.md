@@ -1,5 +1,5 @@
 # Setup
-- Secret `test-secret` FOO: BAR
+- Secret data: FOO=BAR, SOURCE=YAML, GCP or VAULT
 - Pod which reads the secret and provides it via the environment
 
 # Case 1
