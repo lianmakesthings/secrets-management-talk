@@ -1,8 +1,23 @@
 load('ext://helm_resource', 'helm_resource', 'helm_repo')
 
 # Installing Bitnami Sealed Secrets
-helm_repo('bitnami', 'https://bitnami-labs.github.io/sealed-secrets')
-helm_resource('sealed-secrets', 'bitnami/sealed-secrets')
-Applying sealed secret
-k8s_yaml('sealed-secrets/sealed-secret.yaml')
-k8s_resource(workload='sealed-secret', labels=['app'])
+helm_repo('bitnami', 'https://bitnami-labs.github.io/sealed-secrets', labels=['sealed-secrets'])
+helm_resource('sealed-secrets', 'bitnami/sealed-secrets', namespace='sealed-secrets', flags=['--create-namespace'], resource_deps=['bitnami'], labels=['sealed-secrets'])
+
+# Fetch certkey from cluster
+local_resource('fetch-cert',
+  cmd='kubeseal --fetch-cert --controller-name=sealed-secrets --controller-namespace=sealed-secrets > remote-cluster/pub-cert.pem',
+  resource_deps=['sealed-secrets'],
+  labels=['sealed-secrets']
+)
+
+# Seal secret
+local_resource('seal-secret',
+  cmd='kubeseal --cert=remote-cluster/pub-cert.pem --format=yaml < app/k8s-secret.yaml > sealed-secrets/sealed-secret.yaml',
+  resource_deps=['fetch-cert'],
+  labels=['sealed-secrets']
+)
+
+# Applying sealed secret
+k8s_yaml('sealed-secret.yaml')
+k8s_resource(new_name='sealed-secret', objects=['test-secret:SealedSecret'], resource_deps = ['seal-secret'], labels=['app'])
