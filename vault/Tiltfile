@@ -6,7 +6,7 @@ helm_resource('external-secrets', 'eso/external-secrets', namespace='eso', flags
 
 # Installing Hashicorp Vault
 helm_repo('hashicorp', 'https://helm.releases.hashicorp.com', labels=['vault'])
-helm_resource('consul', 'hashicorp/consul', namespace='vault', flags=['--create-namespace', '--values', 'vault/consul-values.yaml'], labels=['vault'])
+helm_resource('consul', 'hashicorp/consul', namespace='vault', flags=['--create-namespace', '--values', 'consul-values.yaml'], labels=['vault'])
 helm_resource('vault', 'hashicorp/vault', namespace='vault', resource_deps=['consul'], flags=['--create-namespace', '--values', 'vault/vault-values.yaml'], labels=['vault'])
 os.putenv('VAULT_ADDR', 'http://127.0.0.1:8200')
 local_resource(
@@ -58,7 +58,7 @@ vault write auth/kubernetes/login role=eso-role jwt=$demo_account_token iss=http
   labels=['vault']
 )
 
-k8s_yaml('vault/secret-store.yaml')
+k8s_yaml('secret-store.yaml')
 k8s_resource(new_name='vault-secret-store', objects=['vault-backend:secretstore'], labels=['vault'])
 
 
@@ -72,8 +72,8 @@ vault kv put kv/test-secret FOO=BAR SOURCE=VAULT""",
 )
 
 # Create External Secret
-k8s_yaml('vault/external-secret.yaml')
+k8s_yaml('external-secret.yaml')
 k8s_resource(new_name='vault-external-secret', objects=['vault-test-secret:externalsecret'], labels=['vault'])
 
-k8s_yaml('app/pod-reading-secret.yaml')
+k8s_yaml('../app/pod-reading-secret.yaml')
 k8s_resource(workload='reading-secret', labels=['app'])
