@@ -1,4 +1,5 @@
 load('ext://helm_resource', 'helm_resource', 'helm_repo')
+load('ext://namespace', 'namespace_create', 'namespace_inject')
 
 # Installing Bitnami Sealed Secrets
 helm_repo('bitnami', 'https://bitnami-labs.github.io/sealed-secrets', labels=['sealed-secrets'])
@@ -13,15 +14,16 @@ local_resource('fetch-cert',
 
 # Seal secret
 local_resource('seal-secret',
-  cmd='kubeseal --cert=pub-cert.pem --format=yaml < ../app/k8s-secret.yaml > sealed-secret.yaml',
+  cmd='kubeseal --cert=pub-cert.pem --format=yaml < k8s-secret.yaml > sealed-secret.yaml',
   resource_deps=['fetch-cert'],
   labels=['sealed-secrets']
 )
 
+namespace_create('sealed-secret-app')
 # Deploying sealed secret
-k8s_yaml('sealed-secret.yaml')
-k8s_resource(new_name='deploy-sealed-secret', objects=['test-secret:SealedSecret'], resource_deps=['seal-secret'], labels=['sealed-secrets'])
+k8s_yaml(namespace_inject(read_file('sealed-secret.yaml'), 'sealed-secret-app'))
+k8s_resource(new_name='deploy-sealed-secret', objects=['test-secret:SealedSecret'], resource_deps=['seal-secret'], labels=['app'])
 
 # Read secret
-k8s_yaml('../app/pod-reading-secret.yaml')
+k8s_yaml(namespace_inject(read_file('../app/pod-reading-secret.yaml'), 'sealed-secret-app'))
 k8s_resource(workload='reading-secret', resource_deps=['seal-secret'],labels=['app'])
