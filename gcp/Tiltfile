@@ -1,19 +1,20 @@
 load('ext://helm_resource', 'helm_resource', 'helm_repo')
+load('ext://namespace', 'namespace_create', 'namespace_inject')
 
 # Installing External Secrets Operator
 helm_repo('eso', 'https://charts.external-secrets.io', labels=['eso'])
-helm_resource('external-secrets', 'eso/external-secrets', namespace='eso', flags=['--create-namespace'], labels=['eso'])
+helm_resource('external-secrets-operator', 'eso/external-secrets', namespace='eso', flags=['--create-namespace'], labels=['eso'])
 
-# Allow ESO to retrieve GCP Secrets
-local_resource('attach-SA-to-GCP',
-  cmd='gcloud iam service-accounts add-iam-policy-binding external-secrets@secret-management-talk.iam.gserviceaccount.com \
-    --role roles/iam.workloadIdentityUser \
-    --member "serviceAccount:secret-management-talk.svc.id.goog[eso/external-secrets]"',
-    labels=['gcp']
-)
+# # Allow ESO to retrieve GCP Secrets
+# local_resource('attach-SA-to-GCP',
+#   cmd='gcloud iam service-accounts add-iam-policy-binding external-secrets@secret-management-talk.iam.gserviceaccount.com \
+#     --role roles/iam.workloadIdentityUser \
+#     --member "serviceAccount:secret-management-talk.svc.id.goog[eso/external-secrets]"',
+#     labels=['gcp']
+# )
 k8s_yaml('gcp-sa-key-secret.yaml')
 k8s_yaml('secret-store.yaml')
-k8s_resource(new_name='gcp-secret', objects=['gcpsm-secret:secret', 'secret-mgmt-talk:secretstore'], labels=['gcp'])
+k8s_resource(new_name='gcp-secret-store', objects=['gcpsm-secret:secret', 'secret-mgmt-talk:secretstore'], resource_deps=['external-secrets-operator'], labels=['gcp'])
 
 # # Create GCP Secrets
 # local_resource(
@@ -23,10 +24,11 @@ k8s_resource(new_name='gcp-secret', objects=['gcpsm-secret:secret', 'secret-mgmt
 #   labels=['gcp']
 # )
 
+namespace_create('gcp-eso-app')
 # Create External Secret
-k8s_yaml('external-secret.yaml')
-k8s_resource(new_name='gcp-external-secret', objects=['gcp-test-secret:externalsecret'], labels=['gcp'])
+k8s_yaml(namespace_inject(read_file('external-secret.yaml'), 'gcp-eso-app'))
+k8s_resource(new_name='deploy-external-secret', objects=['gcp-test-secret:externalsecret'], resource_deps=['gcp-secret-store'], labels=['app'])
 
 # Read secret
-k8s_yaml('../app/pod-reading-secret.yaml')
+k8s_yaml(namespace_inject(read_file('../app/pod-reading-secret.yaml'), 'gcp-eso-app'))
 k8s_resource(workload='reading-secret', labels=['app'])
