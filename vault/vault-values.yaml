@@ -1,4 +1,5 @@
 server:
   affinity: ""
   ha:
-    enabled: true
+    enabled: false
+    replicas: 1
