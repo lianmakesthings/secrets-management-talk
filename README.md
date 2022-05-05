@@ -155,16 +155,19 @@ vault write auth/kubernetes/config token_reviewer_jwt="${tr_account_token}" kube
 disable_issuer_verification=true
 ```
 ```
-demo_secret_name="$(kubectl get serviceaccount external-secrets -n eso -o jsonpath='{.secrets[0].name}')"
-demo_account_token="$(kubectl get secret ${demo_secret_name} -n eso -o jsonpath='{.data.token}' | base64 --decode)"                  
+sa_secret_name="$(kubectl get serviceaccount external-secrets -n eso -o jsonpath='{.secrets[0].name}')"
+sa_account_token="$(kubectl get secret ${sa_secret_name} -n eso -o jsonpath='{.data.token}' | base64 --decode)"                  
 
 vault write auth/kubernetes/role/eso-role \
     bound_service_account_names=external-secrets \
-    bound_service_account_namespaces=es \
+    bound_service_account_namespaces=eso \
     policies=eso-policy \
     ttl=24h
 
-vault write auth/kubernetes/login role=eso-role jwt=$demo_account_token iss=https://kubernetes.default.svc.cluster.local
+vault write auth/kubernetes/login role=eso-role jwt=$sa_account_token iss=https://kubernetes.default.svc.cluster.local
+```
+```
+kubectl apply -f vault/secret-store.yaml
 ```
 
 - Create secret in Vault
