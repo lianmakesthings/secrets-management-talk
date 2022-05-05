@@ -1,5 +1,5 @@
 # Setup
-- Secret data: FOO=BAR, SOURCE=YAML, GCP or VAULT
+- Secret data: ENV=DEV or PROD, SOURCE=YAML, GCP or VAULT
 - Pod which reads the secret and provides it via the environment
 
 # Case 1
@@ -89,7 +89,7 @@ kubectl apply -f eso/gcp-secret.yaml
 
 - Create GCP Secrets
 ```
-printf "BAR" | gcloud secrets create FOO --data-file=-
+printf "PROD" | gcloud secrets create ENV --data-file=-
 printf "GCP" | gcloud secrets create SOURCE --data-file=-
 ```
 
@@ -173,7 +173,7 @@ kubectl apply -f vault/secret-store.yaml
 - Create secret in Vault
 ```
 vault secrets enable -version=2 kv
-vault kv put kv/test-secret FOO=BAR SOURCE=VAULT
+vault kv put kv/test-secret ENV=PROD SOURCE=VAULT
 ```
 - Create External Secret
 ```

@@ -18,7 +18,7 @@ k8s_resource(new_name='gcp-secret-store', objects=['gcpsm-secret:Secret:eso', 'g
 # # Create GCP Secrets
 # local_resource(
 #   name='create-gcp-secrets',
-#   cmd="""printf "BAR" | gcloud secrets create FOO --data-file=-
+#   cmd="""printf "PROD" | gcloud secrets create ENV --data-file=-
 # printf "GCP" | gcloud secrets create SOURCE --data-file=-""",
 #   labels=['gcp']
 # )

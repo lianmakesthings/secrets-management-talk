@@ -68,7 +68,7 @@ k8s_resource(new_name='secret-store', objects=['vault-backend:ClusterSecretStore
 local_resource(
   name='add-vault-secret',
   cmd="""vault secrets enable -version=2 kv
-vault kv put kv/test-secret FOO=BAR SOURCE=VAULT""",
+vault kv put kv/test-secret ENV=DEV SOURCE=VAULT""",
   resource_deps=['vault'],
   labels=['vault']
 )
