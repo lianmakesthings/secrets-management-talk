@@ -1,9 +1,5 @@
 load('ext://helm_resource', 'helm_resource', 'helm_repo')
 
-# Installing External Secrets Operator
-helm_repo('eso', 'https://charts.external-secrets.io', labels=['eso'])
-helm_resource('external-secrets-operator', 'eso/external-secrets', namespace='eso', flags=['--create-namespace'], labels=['eso'])
-
 # Installing Hashicorp Vault
 helm_repo('hashicorp', 'https://helm.releases.hashicorp.com', labels=['vault'])
 helm_resource('consul', 'hashicorp/consul', namespace='vault', flags=['--create-namespace', '--values', 'consul-values.yaml'], labels=['vault'])
@@ -15,6 +11,10 @@ local_resource(
   resource_deps=['vault'],
   labels=['vault']
 )
+
+# Installing External Secrets Operator
+helm_repo('eso', 'https://charts.external-secrets.io', labels=['eso'])
+helm_resource('external-secrets-operator', 'eso/external-secrets', namespace='eso', flags=['--create-namespace'], resource_deps=['vault'], labels=['eso'])
 
 # Configure ESO to authenticate with Vault
 local_resource(
@@ -29,7 +29,9 @@ tr_account_token="$(kubectl get secret ${secret_name} -n vault -o jsonpath='{.da
 
 vault write auth/kubernetes/config token_reviewer_jwt="${tr_account_token}" kubernetes_host="https://${k8s_host}:${k8s_port}" kubernetes_ca_cert="${k8s_cacert}" 
 disable_issuer_verification=true""",
-  resource_deps=['vault'],
+  resource_deps=['eso'],
+  auto_init=False, 
+  trigger_mode=TRIGGER_MODE_MANUAL, 
   labels=['vault']
 )
 
@@ -40,7 +42,7 @@ path "kv/data/test-secret"
 {  capabilities = ["read"]                
 }                         
 EOF""",
-  resource_deps=['vault'],
+  resource_deps=['enable-k8s-auth'],
   labels=['eso']
 )
 
@@ -66,9 +68,8 @@ k8s_resource(new_name='secret-store', objects=['vault-backend:ClusterSecretStore
 
 # Create Secret in Vault
 local_resource(
-  name='add-vault-secret',
-  cmd="""vault secrets enable -version=2 kv
-vault kv put kv/test-secret ENV=DEV SOURCE=VAULT""",
-  resource_deps=['vault'],
+  name='enable-kv-storage',
+  cmd='vault secrets enable -version=2 kv',
+  resource_deps=['enable-k8s-auth'],
   labels=['vault']
 )

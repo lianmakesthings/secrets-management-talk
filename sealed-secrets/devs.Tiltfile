@@ -3,6 +3,9 @@ allow_k8s_contexts('Default')
 ENV = os.getenv('ENV')
 trigger_mode(TRIGGER_MODE_MANUAL)
 
+if ENV == "dev":
+  include('./ops.Tiltfile')
+
 # Fetch certkey from cluster
 local_resource('fetch-cert',
   cmd='kubeseal --fetch-cert --controller-name=sealed-secrets-controller --controller-namespace=sealed-secrets > pub-cert.pem',
