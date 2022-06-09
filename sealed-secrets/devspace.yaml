@@ -37,17 +37,13 @@ deployments:
       chart:
         name: sealed-secrets
         repo: https://bitnami-labs.github.io/sealed-secrets
-      # Under `values` we can define the values for this Helm chart used during `helm install/upgrade`
-      # You may also use `valuesFiles` to load values from files, e.g. valuesFiles: ["values.yaml"]
-      values:
-        containers:
-          - image: username/app
   sealed-secret:
     kubectl: 
       manifests: [sealed-secret.yaml]
   app:
     kubectl:
       manifests: [../app/pod-reading-secret.yaml]
+    namespace: sealed-secret-app
     
 
 # This is a list of `dev` containers that are based on the containers created by your deployments
