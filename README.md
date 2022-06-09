@@ -12,7 +12,7 @@
 - Install sealed secrets controller on remote cluster via helm
 ```
 helm repo add bitnami https://bitnami-labs.github.io/sealed-secrets
-helm install sealed-secrets bitnami/sealed-secrets
+helm install sealed-secrets-controller bitnami/sealed-secrets
 ```
 - Install kubeseal, fetch pubkey from cluster
 ```

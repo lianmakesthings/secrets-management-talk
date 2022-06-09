@@ -77,7 +77,7 @@ dev:
 commands:
   fetch-cert:
     command: |-
-      kubeseal --fetch-cert --controller-name=sealed-secrets --controller-namespace=default > pub-cert.pem
+      kubeseal --fetch-cert --controller-name=sealed-secrets-controller --controller-namespace=default > pub-cert.pem
   seal-secret:
     command: |-
       kubeseal --cert=pub-cert.pem --format=yaml < ${ENV}-k8s-secret.yaml > sealed-secret.yaml
