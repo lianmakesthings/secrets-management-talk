@@ -78,13 +78,6 @@ commands:
     command: |-
       kubeseal --cert=pub-cert.pem --format=yaml < ${ENV}-k8s-secret.yaml > sealed-secret.yaml
 
-vars:
-  KUBE_SECRET:
-    source: all
-  SEALED_SECRET:
-    source: all
-
-
 # Define dependencies to other projects with a devspace.yaml
 # dependencies:
 #   api:
