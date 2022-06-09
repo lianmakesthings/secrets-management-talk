@@ -43,7 +43,6 @@ helm install --values consul-values.yaml consul hashicorp/consul -n vault --crea
 ```
 - Install Vault
 ```
-helm repo add hashicorp https://helm.releases.hashicorp.com
 helm install --values vault-values.yaml vault hashicorp/vault -n vault
 
 export VAULT_ADDR=http://127.0.0.1:8200
@@ -62,7 +61,7 @@ vault login <root token>
 - Install ESO
 ```
 helm repo add eso https://charts.external-secrets.io
-helm install external-secrets eso/external-secrets --namespace eso --create-namespace
+helm install external-secrets-operator eso/external-secrets --namespace eso --create-namespace
 ``` 
 
 - Configure ESO to authenticate with Vault
@@ -79,7 +78,7 @@ vault write auth/kubernetes/config token_reviewer_jwt="${tr_account_token}" kube
 disable_issuer_verification=true
 ```
 ```
-sa_secret_name="$(kubectl get serviceaccount external-secrets -n eso -o jsonpath='{.secrets[0].name}')"
+sa_secret_name="$(kubectl get serviceaccount external-secrets-operator -n eso -o jsonpath='{.secrets[0].name}')"
 sa_account_token="$(kubectl get secret ${sa_secret_name} -n eso -o jsonpath='{.data.token}' | base64 --decode)"
 
 vault policy write eso-policy -<<EOF     
@@ -89,7 +88,7 @@ path "kv/data/test-secret"
 EOF
 
 vault write auth/kubernetes/role/eso-role \
-    bound_service_account_names=external-secrets \
+    bound_service_account_names=external-secrets-operator \
     bound_service_account_namespaces=eso \
     policies=eso-policy \
     ttl=24h
@@ -108,4 +107,8 @@ vault kv put kv/test-secret ENV=PROD SOURCE=VAULT
 - Create External Secret
 ```
 kubectl apply -f vault/external-secret.yaml
+```
+- Read Secret via app
+```
+kubectl apply -nvault-eso-app app/pod-reading-secret.yaml
 ```
