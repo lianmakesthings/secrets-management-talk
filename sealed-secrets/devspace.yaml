@@ -1,5 +1,5 @@
 version: v2beta1
-name: secrets-management-talkgit
+name: secrets-management-sealed-secrets
 
 # This is a list of `pipelines` that DevSpace can execute (you can define your own)
 pipelines:
