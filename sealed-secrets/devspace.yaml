@@ -21,13 +21,6 @@ pipelines:
       devspace run fetch-cert
       devspace run seal-secret
 
-# This is a list of `images` that DevSpace can build for this project
-# We recommend to skip image building during development (devspace dev) as much as possible
-images:
-  app:
-    image: username/app
-    dockerfile: ./Dockerfile
-
 # This is a list of `deployments` that DevSpace can create for this project
 deployments:
   sealed-secrets-controller:
