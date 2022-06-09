@@ -3,3 +3,4 @@ sealed-secrets/pub-cert.pem
 gcp/gcp-sa-key-secret.yaml
 vault/unseal-keys.txt
 .DS_Store
+**/.devspace/
