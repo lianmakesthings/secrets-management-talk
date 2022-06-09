@@ -8,8 +8,8 @@
 - Secret provided as Sealed Secret
 
 ## Usage
-### Seal Secret for remote cluster usage
-- Install sealed secrets controller on remote cluster via helm
+### Seal k8s Secret
+- Install sealed secrets controller on cluster via helm
 ```
 helm repo add bitnami https://bitnami-labs.github.io/sealed-secrets
 helm install sealed-secrets-controller bitnami/sealed-secrets
@@ -17,22 +17,16 @@ helm install sealed-secrets-controller bitnami/sealed-secrets
 - Install kubeseal, fetch pubkey from cluster
 ```
 brew install kubeseal
-kubeseal --fetch-cert --controller-name=sealed-secrets --controller-namespace=default > remote-cluster/pub-cert.pem
+kubeseal --fetch-cert --controller-name=sealed-secrets --controller-namespace=default > pub-cert.pem
 ```
 - Seal Secret with kubeseal
 ```
-kubeseal --cert=remote-cluster/pub-cert.pem --format=yaml < app/k8s-secret.yaml > app/sealed-secret.yaml
+kubeseal --cert=pub-cert.pem --format=yaml < prod-k8s-secret.yaml > sealed-secret.yaml
 ```
-### make sealed secret usable on local cluster
-- Fetch private keys from remote cluster
+### Deploy sealed secret and app
 ```
-kubectl get secret -l sealedsecrets.bitnami.com/sealed-secrets-key -o yaml > remote-cluster/master.key
-```
-- Install sealed secrets on local cluster (done via tilt)
-- Update private keys on local cluster's sealed secrets controller
-```
-kubectl apply -f remote-cluster/master.key
-kubectl delete pod -l name=sealed-secrets
+kubectl apply -f sealed-secret.yaml
+kubectl apply -nsealed-secret-app -f ../app/prod-reading-secret.yaml
 ```
 
 # Case 2
