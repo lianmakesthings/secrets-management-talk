@@ -37,30 +37,6 @@ deployments:
     kubectl:
       manifests: [../app/pod-reading-secret.yaml]
     namespace: sealed-secret-app
-    
-
-# This is a list of `dev` containers that are based on the containers created by your deployments
-dev:
-  app:
-    # Search for the container that runs this image
-    imageSelector: username/app
-    # Replace the container image with this dev-optimized image (allows to skip image building during development)
-    devImage: ghcr.io/loft-sh/devspace-containers/alpine:3
-    # Open a terminal and use the following command to start it
-    terminal:
-      command: ./devspace_start.sh
-    # Sync files between the local filesystem and the development container
-    sync:
-      - path: ./
-    # Inject a lightweight SSH server into the container (so your IDE can connect to the remote dev env)
-    ssh:
-      enabled: true
-    # Make the following commands from my local machine available inside the dev container
-    proxyCommands:
-      - command: devspace
-      - command: kubectl
-      - command: helm
-      - command: git
 
 # Use the `commands` section to define repeatable dev workflows for this project 
 commands:
