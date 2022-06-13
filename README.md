@@ -8,7 +8,23 @@
 - Secret provided as Sealed Secret
 
 ## Usage
-### Seal k8s Secret
+Navigate to the subfolder
+```
+cd sealed-secrets
+```
+### With vcluster & DevSpace (on dev)
+```
+vcluster create sealed-secrets -nsealed-secrets
+vcluster connect sealed-secrets -nsealed-secrets --kube-config kubeconfig.yaml
+```
+In a separate shell
+```
+export KUBECONFIG=kubeconfig.yaml
+devspace dev
+```
+
+### Manually
+#### Seal k8s Secret
 - Install sealed secrets controller on cluster via helm
 ```
 helm repo add bitnami https://bitnami-labs.github.io/sealed-secrets
@@ -23,7 +39,7 @@ kubeseal --fetch-cert --controller-name=sealed-secrets --controller-namespace=de
 ```
 kubeseal --cert=pub-cert.pem --format=yaml < prod-k8s-secret.yaml > sealed-secret.yaml
 ```
-### Deploy sealed secret and app
+#### Deploy sealed secret and app
 ```
 kubectl apply -f sealed-secret.yaml
 kubectl apply -nsealed-secret-app -f ../app/prod-reading-secret.yaml
@@ -35,6 +51,23 @@ kubectl apply -nsealed-secret-app -f ../app/prod-reading-secret.yaml
 - Secret provided by External Secret Operator
 
 ## Usage
+Navigate to the subfolder
+```
+cd vault
+```
+### With vcluster & DevSpace (on dev)
+```
+vcluster create vault-eso -nvault-eso
+vcluster connect vault-eso -nvault-eso --kube-config kubeconfig.yaml
+```
+In a separate shell
+```
+export KUBECONFIG=kubeconfig.yaml
+devspace dev
+```
+
+### Manually
+#### Install & Setup Vault
 - Install Consul
 MAKE SURE YOU DO NOT HAVE A DEFAULT PV ON YOUR CLUSTER ALREADY
 ```
@@ -58,13 +91,13 @@ vault operator unseal <key 3>
 vault login <root token>
 ```
 
-- Install ESO
+#### Install ESO
 ```
 helm repo add eso https://charts.external-secrets.io
 helm install external-secrets-operator eso/external-secrets --namespace eso --create-namespace
 ``` 
 
-- Configure ESO to authenticate with Vault
+#### Authorize ESO for Vault
 ```
 vault auth enable kubernetes
 
@@ -99,6 +132,7 @@ vault write auth/kubernetes/login role=eso-role jwt=$sa_account_token iss=https:
 kubectl apply -f vault/secret-store.yaml
 ```
 
+#### Deploy Secret & App
 - Create secret in Vault
 ```
 vault secrets enable -version=2 kv
