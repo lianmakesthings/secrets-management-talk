@@ -110,5 +110,5 @@ kubectl apply -f vault/external-secret.yaml
 ```
 - Read Secret via app
 ```
-kubectl apply -nvault-eso-app app/pod-reading-secret.yaml
+kubectl apply -nvault-eso-app -f app/pod-reading-secret.yaml
 ```
