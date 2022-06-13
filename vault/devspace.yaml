@@ -1,0 +1,131 @@
+version: v2beta1
+name: secrets-management-vault-eso
+
+# This is a list of `pipelines` that DevSpace can execute (you can define your own)
+pipelines:
+  # This is the pipeline for the main command: `devspace dev` (or `devspace run-pipeline dev`)
+  dev:
+    run: |2-
+      create_deployments consul
+      create_deployments vault
+      start_dev vault
+      create_deployments eso
+      devspace run enable-k8s-auth
+      devspace run authorize-eso
+      devspace run create-vault-entry
+      create_deployments secret-store
+      create_deployments external-secret
+      create_deployments app
+  # You can run this pipeline via `devspace deploy` (or `devspace run-pipeline deploy`)
+  deploy:
+    run: |-
+      create_deployments external-secret
+      create_deployments app
+
+# This is a list of `deployments` that DevSpace can create for this project
+deployments:
+  consul:
+    namespace: vault
+    # This deployment uses `helm` but you can also define `kubectl` deployments or kustomizations
+    helm:
+      # We are deploying this project with the Helm chart you provided
+      chart:
+        name: consul
+        repo: https://helm.releases.hashicorp.com
+      # Under `values` we can define the values for this Helm chart used during `helm install/upgrade`
+      # You may also use `valuesFiles` to load values from files, e.g. valuesFiles: ["values.yaml"]
+      valuesFiles:
+      - ./consul-values.yaml
+  vault:
+    namespace: vault
+    # This deployment uses `helm` but you can also define `kubectl` deployments or kustomizations
+    helm:
+      # We are deploying this project with the Helm chart you provided
+      chart:
+        name: vault
+        repo: https://helm.releases.hashicorp.com
+      # Under `values` we can define the values for this Helm chart used during `helm install/upgrade`
+      # You may also use `valuesFiles` to load values from files, e.g. valuesFiles: ["values.yaml"]
+      valuesFiles:
+      - ./vault-values.yaml
+  eso:
+    namespace: eso
+    # This deployment uses `helm` but you can also define `kubectl` deployments or kustomizations
+    helm:
+      # We are deploying this project with the Helm chart you provided
+      chart:
+        name: external-secrets
+        repo: https://charts.external-secrets.io
+  secret-store:
+    kubectl:
+      manifests: [secret-store.yaml]
+  external-secret:
+    kubectl: 
+      manifests: [external-secret.yaml]
+  app:
+    kubectl:
+      manifests: [../app/pod-reading-secret.yaml]
+    namespace: vault-eso-app
+
+dev:
+  vault:
+    labelSelector:
+      app.kubernetes.io/instance: vault
+      app.kubernetes.io/name: vault
+    namespace: vault
+    ports:
+    - port: 8200:8200
+
+# Use the `commands` section to define repeatable dev workflows for this project 
+commands:
+  enable-k8s-auth:
+    command: |-
+      set +e
+      export VAULT_ADDR=http://127.0.0.1:8200
+
+      vault login root
+      vault auth enable kubernetes
+
+      k8s_host="$(kubectl exec vault-0 -n vault -- printenv | grep KUBERNETES_PORT_443_TCP_ADDR | cut -f 2- -d "=" | tr -d " ")"
+      k8s_port="443"            
+      k8s_cacert="$(kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[].cluster.certificate-authority-data}' | base64 --decode)"
+      secret_name="$(kubectl get serviceaccount vault -n vault -o jsonpath='{.secrets[0].name}')"
+      tr_account_token="$(kubectl get secret ${secret_name} -n vault -o jsonpath='{.data.token}' | base64 --decode)"
+
+      vault write auth/kubernetes/config token_reviewer_jwt="${tr_account_token}" kubernetes_host="https://${k8s_host}:${k8s_port}" kubernetes_ca_cert="${k8s_cacert}" 
+      disable_issuer_verification=true
+  authorize-eso:
+    command: |-
+      export VAULT_ADDR=http://127.0.0.1:8200
+
+      sa_secret_name="$(kubectl get serviceaccount eso-external-secrets -n eso -o jsonpath='{.secrets[0].name}')"
+      sa_account_token="$(kubectl get secret ${sa_secret_name} -n eso -o jsonpath='{.data.token}' | base64 --decode)"
+
+      vault policy write eso-policy -<<EOF
+      path "kv/data/test-secret"
+      {  capabilities = ["read"]
+      }
+      EOF
+
+      vault write auth/kubernetes/role/eso-role \
+      bound_service_account_names=eso-external-secrets \
+      bound_service_account_namespaces=eso \
+      policies=eso-policy \
+      ttl=24h
+
+      vault write auth/kubernetes/login role=eso-role jwt=$sa_account_token iss=https://kubernetes.default.svc.cluster.local
+  create-vault-entry:
+    command: |-
+      set +e
+      export VAULT_ADDR=http://127.0.0.1:8200
+
+      vault secrets enable -version=2 kv
+      vault kv put kv/test-secret ENV=DEV SOURCE=VAULT
+
+# Define dependencies to other projects with a devspace.yaml
+# dependencies:
+#   api:
+#     git: https://...  # Git-based dependencies
+#     tag: v1.0.0
+#   ui:
+#     path: ./ui        # Path-based dependencies (for monorepos)

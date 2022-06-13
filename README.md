@@ -8,97 +8,28 @@
 - Secret provided as Sealed Secret
 
 ## Usage
-### Seal Secret for remote cluster usage
-- Install sealed secrets controller on remote cluster via helm
+### Seal k8s Secret
+- Install sealed secrets controller on cluster via helm
 ```
 helm repo add bitnami https://bitnami-labs.github.io/sealed-secrets
-helm install sealed-secrets bitnami/sealed-secrets
+helm install sealed-secrets-controller bitnami/sealed-secrets
 ```
 - Install kubeseal, fetch pubkey from cluster
 ```
 brew install kubeseal
-kubeseal --fetch-cert --controller-name=sealed-secrets --controller-namespace=default > remote-cluster/pub-cert.pem
+kubeseal --fetch-cert --controller-name=sealed-secrets --controller-namespace=default > pub-cert.pem
 ```
 - Seal Secret with kubeseal
 ```
-kubeseal --cert=remote-cluster/pub-cert.pem --format=yaml < app/k8s-secret.yaml > app/sealed-secret.yaml
+kubeseal --cert=pub-cert.pem --format=yaml < prod-k8s-secret.yaml > sealed-secret.yaml
 ```
-### make sealed secret usable on local cluster
-- Fetch private keys from remote cluster
+### Deploy sealed secret and app
 ```
-kubectl get secret -l sealedsecrets.bitnami.com/sealed-secrets-key -o yaml > remote-cluster/master.key
-```
-- Install sealed secrets on local cluster (done via tilt)
-- Update private keys on local cluster's sealed secrets controller
-```
-kubectl apply -f remote-cluster/master.key
-kubectl delete pod -l name=sealed-secrets
+kubectl apply -f sealed-secret.yaml
+kubectl apply -nsealed-secret-app -f ../app/prod-reading-secret.yaml
 ```
 
 # Case 2
-## Objective
-- Secret managed by Cloud Provider (GCP)
-- Secret provided by External Secret Operator
-
-- Create GCP Service Account with necessary role
-```
-gcloud iam service-accounts create external-secrets \
-    --project=GCP_PROJECT_ID
-gcloud projects add-iam-policy-binding GCP_PROJECT_ID \
-    --member "serviceAccount:external-secrets@GCP_PROJECT_ID.iam.gserviceaccount.com" \
-    --role "roles/secretmanager.secretAccessor"
-```
-- Create a cluster with Workload Identity enabled
-```
-gcloud container clusters create CLUSTER_NAME \
-    --region=COMPUTE_REGION \
-    --workload-pool=secret-management-talk.svc.id.goog
-```
-
-- Install ESO
-```
-helm repo add eso https://charts.external-secrets.io
-helm install external-secrets eso/external-secrets --namespace eso --create-namespace
-```
-- Allow K8s SA to impersonate GCP SA
-```
-gcloud iam service-accounts add-iam-policy-binding external-secrets@GCP_PROJECT_ID.iam.gserviceaccount.com \
-    --role roles/iam.workloadIdentityUser \
-    --member "serviceAccount:GCP_PROJECT_ID.svc.id.goog[eso/external-secrets]"
-```
-- Add GCP SA json key to cluster
-```
-cat <<EOF | kubectl apply -f -
-apiVersion: v1
-kind: Secret
-metadata:
-  name: gcpsm-secret
-  labels:
-    type: gcpsm
-type: Opaque
-stringData:
-  secret-access-credentials: |-
-    // This is where the jsonkey goes
-EOF
-```
-- Allow ESO to connect to GCP & retrieve the secret from Google Secret Manager
-```
-kubectl apply -f eso/secret-store.yaml
-kubectl apply -f eso/gcp-secret.yaml
-```
-
-- Create GCP Secrets
-```
-printf "PROD" | gcloud secrets create ENV --data-file=-
-printf "GCP" | gcloud secrets create SOURCE --data-file=-
-```
-
-- Create External Secret
-```
-kubectl apply -f eso/external-secret.yaml
-```
-
-# Case 3
 ## Objective
 - Secret managed by Vault
 - Secret provided by External Secret Operator
@@ -112,7 +43,6 @@ helm install --values consul-values.yaml consul hashicorp/consul -n vault --crea
 ```
 - Install Vault
 ```
-helm repo add hashicorp https://helm.releases.hashicorp.com
 helm install --values vault-values.yaml vault hashicorp/vault -n vault
 
 export VAULT_ADDR=http://127.0.0.1:8200
@@ -131,7 +61,7 @@ vault login <root token>
 - Install ESO
 ```
 helm repo add eso https://charts.external-secrets.io
-helm install external-secrets eso/external-secrets --namespace eso --create-namespace
+helm install external-secrets-operator eso/external-secrets --namespace eso --create-namespace
 ``` 
 
 - Configure ESO to authenticate with Vault
@@ -148,7 +78,7 @@ vault write auth/kubernetes/config token_reviewer_jwt="${tr_account_token}" kube
 disable_issuer_verification=true
 ```
 ```
-sa_secret_name="$(kubectl get serviceaccount external-secrets -n eso -o jsonpath='{.secrets[0].name}')"
+sa_secret_name="$(kubectl get serviceaccount external-secrets-operator -n eso -o jsonpath='{.secrets[0].name}')"
 sa_account_token="$(kubectl get secret ${sa_secret_name} -n eso -o jsonpath='{.data.token}' | base64 --decode)"
 
 vault policy write eso-policy -<<EOF     
@@ -158,7 +88,7 @@ path "kv/data/test-secret"
 EOF
 
 vault write auth/kubernetes/role/eso-role \
-    bound_service_account_names=external-secrets \
+    bound_service_account_names=external-secrets-operator \
     bound_service_account_namespaces=eso \
     policies=eso-policy \
     ttl=24h
@@ -177,4 +107,8 @@ vault kv put kv/test-secret ENV=PROD SOURCE=VAULT
 - Create External Secret
 ```
 kubectl apply -f vault/external-secret.yaml
+```
+- Read Secret via app
+```
+kubectl apply -nvault-eso-app -f app/pod-reading-secret.yaml
 ```

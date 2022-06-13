@@ -3,3 +3,8 @@ server:
   ha:
     enabled: false
     replicas: 1
+  dev:
+    enabled: true
+
+    # Set VAULT_DEV_ROOT_TOKEN_ID value
+    devRootToken: "root"
