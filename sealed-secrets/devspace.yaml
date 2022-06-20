@@ -7,6 +7,7 @@ pipelines:
   dev:
     run: |2-
       create_deployments sealed-secrets-controller   # 2. Deploy Helm charts and manifests specfied as "deployments"
+      sleep 5
       export ENV=dev
       run_pipelines create-sealed-secret
       create_deployments sealed-secret app
