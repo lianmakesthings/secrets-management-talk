@@ -56,7 +56,7 @@ vcluster create vault-eso -nvault-eso
 devspace dev
 ```
 
-### Manually
+### Manually (on prod)
 #### Install & Setup Vault
 - Install Consul
 MAKE SURE YOU DO NOT HAVE A DEFAULT PV ON YOUR CLUSTER ALREADY
@@ -66,14 +66,13 @@ helm install --values consul-values.yaml consul hashicorp/consul -n vault --crea
 ```
 - Install Vault
 ```
-helm install --values vault-values.yaml vault hashicorp/vault -n vault
-
-export VAULT_ADDR=http://127.0.0.1:8200
+helm install --values vault-prod-values.yaml vault hashicorp/vault -n vault
 kubectl port-forward svc/vault -n vault 8200:8200
 ```
 
 - Setup Vault for the first time
 ```
+export VAULT_ADDR=http://127.0.0.1:8200
 vault operator init
 vault operator unseal <key 1>
 vault operator unseal <key 2>
@@ -119,7 +118,7 @@ vault write auth/kubernetes/role/eso-role \
 vault write auth/kubernetes/login role=eso-role jwt=$sa_account_token iss=https://kubernetes.default.svc.cluster.local
 ```
 ```
-kubectl apply -f vault/secret-store.yaml
+kubectl apply -f secret-store.yaml
 ```
 
 #### Deploy Secret & App
@@ -130,9 +129,10 @@ vault kv put kv/test-secret ENV=PROD SOURCE=VAULT
 ```
 - Create External Secret
 ```
-kubectl apply -f vault/external-secret.yaml
+kubectl create ns vault-eso-app
+kubectl apply -f external-secret.yaml
 ```
 - Read Secret via app
 ```
-kubectl apply -nvault-eso-app -f app/pod-reading-secret.yaml
+kubectl apply -nvault-eso-app -f ../app/pod-reading-secret.yaml
 ```
