@@ -15,15 +15,10 @@ cd sealed-secrets
 ### With vcluster & DevSpace (on dev)
 ```
 vcluster create sealed-secrets -nsealed-secrets
-vcluster connect sealed-secrets -nsealed-secrets --kube-config kubeconfig.yaml
-```
-In a separate shell
-```
-export KUBECONFIG=kubeconfig.yaml
 devspace dev
 ```
 
-### Manually
+### Manually (on prod)
 #### Seal k8s Secret
 - Install sealed secrets controller on cluster via helm
 ```
@@ -33,7 +28,7 @@ helm install sealed-secrets-controller bitnami/sealed-secrets
 - Install kubeseal, fetch pubkey from cluster
 ```
 brew install kubeseal
-kubeseal --fetch-cert --controller-name=sealed-secrets --controller-namespace=default > pub-cert.pem
+kubeseal --fetch-cert --controller-name=sealed-secrets-controller --controller-namespace=default > pub-cert.pem
 ```
 - Seal Secret with kubeseal
 ```
@@ -58,11 +53,6 @@ cd vault
 ### With vcluster & DevSpace (on dev)
 ```
 vcluster create vault-eso -nvault-eso
-vcluster connect vault-eso -nvault-eso --kube-config kubeconfig.yaml
-```
-In a separate shell
-```
-export KUBECONFIG=kubeconfig.yaml
 devspace dev
 ```
 
