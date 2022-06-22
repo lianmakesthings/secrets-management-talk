@@ -1,0 +1,7 @@
+server:
+  affinity: ""
+  ha:
+    enabled: false
+    replicas: 1
+  dev:
+    enabled: false
