@@ -7,18 +7,19 @@ pipelines:
   dev:
     run: |2-
       create_deployments consul
-      create_deployments vault
+      create_deployments vault eso
       start_dev vault
-      create_deployments eso
       devspace run enable-k8s-auth
       devspace run authorize-eso
-      devspace run create-vault-entry
       create_deployments secret-store
+      devspace run create-vault-entry
       create_deployments external-secret
       create_deployments app
   # You can run this pipeline via `devspace deploy` (or `devspace run-pipeline deploy`)
   deploy:
     run: |-
+      start_dev vault
+      devspace run create-vault-entry
       create_deployments external-secret
       create_deployments app
 
@@ -56,12 +57,16 @@ deployments:
       chart:
         name: external-secrets
         repo: https://charts.external-secrets.io
+      upgradeArgs:
+        - '--wait'
   secret-store:
     kubectl:
       manifests: [secret-store.yaml]
+    namespace: vault-eso-app
   external-secret:
     kubectl: 
       manifests: [external-secret.yaml]
+    namespace: vault-eso-app
   app:
     kubectl:
       manifests: [../app/pod-reading-secret.yaml]

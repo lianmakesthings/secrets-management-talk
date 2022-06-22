@@ -6,8 +6,7 @@ pipelines:
   # This is the pipeline for the main command: `devspace dev` (or `devspace run-pipeline dev`)
   dev:
     run: |2-
-      create_deployments sealed-secrets-controller   # 2. Deploy Helm charts and manifests specfied as "deployments"
-      sleep 5
+      create_deployments sealed-secrets-controller
       export ENV=dev
       run_pipelines create-sealed-secret
       create_deployments sealed-secret app
@@ -31,6 +30,8 @@ deployments:
       chart:
         name: sealed-secrets
         repo: https://bitnami-labs.github.io/sealed-secrets
+      upgradeArgs:
+        - '--wait'
   sealed-secret:
     kubectl: 
       manifests: [sealed-secret.yaml]
