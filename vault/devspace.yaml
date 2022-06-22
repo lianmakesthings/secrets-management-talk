@@ -126,11 +126,3 @@ commands:
 
       vault secrets enable -version=2 kv
       vault kv put kv/test-secret ENV=DEV SOURCE=VAULT
-
-# Define dependencies to other projects with a devspace.yaml
-# dependencies:
-#   api:
-#     git: https://...  # Git-based dependencies
-#     tag: v1.0.0
-#   ui:
-#     path: ./ui        # Path-based dependencies (for monorepos)

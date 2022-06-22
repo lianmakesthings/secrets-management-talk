@@ -49,10 +49,3 @@ commands:
     command: |-
       kubeseal --cert=pub-cert.pem --format=yaml < ${ENV}-k8s-secret.yaml > sealed-secret.yaml
 
-# Define dependencies to other projects with a devspace.yaml
-# dependencies:
-#   api:
-#     git: https://...  # Git-based dependencies
-#     tag: v1.0.0
-#   ui:
-#     path: ./ui        # Path-based dependencies (for monorepos)
