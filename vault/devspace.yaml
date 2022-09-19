@@ -125,4 +125,4 @@ commands:
       export VAULT_ADDR=http://127.0.0.1:8200
 
       vault secrets enable -version=2 kv
-      vault kv put kv/test-secret ENV=DEV SOURCE=VAULT
+      vault kv put kv/test-secret ENV=PROD SOURCE=VAULT

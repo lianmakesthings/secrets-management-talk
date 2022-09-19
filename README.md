@@ -101,9 +101,6 @@ vault write auth/kubernetes/config token_reviewer_jwt="${tr_account_token}" kube
 disable_issuer_verification=true
 ```
 ```
-sa_secret_name="$(kubectl get serviceaccount external-secrets-operator -n eso -o jsonpath='{.secrets[0].name}')"
-sa_account_token="$(kubectl get secret ${sa_secret_name} -n eso -o jsonpath='{.data.token}' | base64 --decode)"
-
 vault policy write eso-policy -<<EOF     
 path "kv/data/test-secret"                                                  
 {  capabilities = ["read"]                
@@ -116,7 +113,6 @@ vault write auth/kubernetes/role/eso-role \
     policies=eso-policy \
     ttl=24h
 
-vault write auth/kubernetes/login role=eso-role jwt=$sa_account_token iss=https://kubernetes.default.svc.cluster.local
 ```
 ```
 kubectl apply -f secret-store.yaml
@@ -130,7 +126,7 @@ vault kv put kv/test-secret ENV=PROD SOURCE=VAULT
 ```
 - Create External Secret
 ```
-kubectl create ns vault-eso-app
+kubectl create namespace vault-eso-app
 kubectl apply -f external-secret.yaml
 ```
 - Read Secret via app
