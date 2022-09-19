@@ -36,6 +36,7 @@ kubeseal --cert=pub-cert.pem --format=yaml < prod-k8s-secret.yaml > sealed-secre
 ```
 #### Deploy sealed secret and app
 ```
+kubectl create namespace sealed-secret-app
 kubectl apply -f sealed-secret.yaml
 kubectl apply -nsealed-secret-app -f ../app/pod-reading-secret.yaml
 ```
