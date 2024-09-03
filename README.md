@@ -71,6 +71,9 @@ helm install --values vault-prod-values.yaml vault hashicorp/vault -n vault
 kubectl port-forward svc/vault -n vault 8200:8200
 ```
 
+- Install Vault CLI
+https://developer.hashicorp.com/vault/docs/install
+
 - Setup Vault for the first time
 ```
 export VAULT_ADDR=http://127.0.0.1:8200
