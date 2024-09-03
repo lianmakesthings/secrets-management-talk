@@ -78,6 +78,9 @@ https://developer.hashicorp.com/vault/docs/install
 ```
 export VAULT_ADDR=http://127.0.0.1:8200
 vault operator init
+```
+The last command will return five keys and a root token that can be used to unseal the vault and interact with it as shown below
+```
 vault operator unseal <key 1>
 vault operator unseal <key 2>
 vault operator unseal <key 3>
